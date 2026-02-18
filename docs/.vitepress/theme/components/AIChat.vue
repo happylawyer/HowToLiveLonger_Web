@@ -78,7 +78,6 @@ const messages = ref([
   { role: 'assistant', text: '您好！我是您的智能健康顾问。您可以尝试问我：“久坐后如何补救？”或者“白领吃什么补剂最好？”' }
 ])
 
-// API Key 混淆拼接
 const k1 = "AIzaSyAz3M";
 const k2 = "w0sq_TYaEP";
 const k3 = "3rfCouH7i3";
@@ -100,17 +99,16 @@ const sendMessage = async () => {
   
   await scrollBottom()
 
-  const fetchAI = async (modelName) => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_KEY}`;
+  const fetchAI = async (apiVersion, modelName) => {
+    const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${GEMINI_KEY}`;
     return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
           parts: [{ text: `
-            身份：你是一个白领健康顾问。
-            任务：基于《程序员/白领延寿指南》提供医学建议。
-            要求：专业、引用百分比数据。
+            身份：你是一个白领健康顾问。基于《白领延寿指南》回答问题。
+            要求：专业、引用具体医学数据。
             问题：${text}
           ` }]
         }]
@@ -119,16 +117,20 @@ const sendMessage = async () => {
   }
 
   try {
-    // 强制使用 1.5-flash，因为它在免费层级最稳
-    let response = await fetchAI('gemini-1.5-flash')
+    // 尝试不同的 API 版本和模型 ID 组合
+    let response = await fetchAI('v1beta', 'gemini-1.5-flash-latest')
     
     if (!response.ok) {
+        response = await fetchAI('v1', 'gemini-1.5-flash')
+    }
+    
+    if (!response.ok) {
+        response = await fetchAI('v1beta', 'gemini-pro')
+    }
+
+    if (!response.ok) {
       const errorData = await response.json()
-      // 如果提示 429 且 limit: 0，说明是项目未完全激活
-      if (response.status === 429 && errorData.error?.message?.includes('limit: 0')) {
-        throw new Error('API 密钥已就绪但 Google 尚未激活该项目的免费额度（通常需要等待 10-20 分钟）。')
-      }
-      throw new Error(errorData.error?.message || 'API 请求异常')
+      throw new Error(errorData.error?.message || 'API 请求失败')
     }
     
     const data = await response.json()
