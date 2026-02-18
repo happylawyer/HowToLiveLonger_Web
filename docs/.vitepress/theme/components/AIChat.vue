@@ -2,42 +2,60 @@
   <div class="chat-wrapper" :class="{ 'chat-open': isOpen }">
     <!-- 悬浮球 -->
     <button class="chat-trigger" @click="isOpen = !isOpen">
-      <span v-if="!isOpen" class="trigger-text">
-        <span class="pulse-icon">🧠</span> 问问 AI 医生
-      </span>
-      <span v-else class="trigger-text">✖ 关闭咨询</span>
+      <div v-if="!isOpen" class="trigger-text">
+        <div class="pulse-container">
+          <div class="pulse-ring"></div>
+          <span class="pulse-icon">🧠</span>
+        </div>
+        <span>AI 智能咨询</span>
+      </div>
+      <span v-else class="trigger-text">✖ 关闭</span>
     </button>
 
     <!-- 聊天窗口 -->
-    <transition name="fade">
+    <transition name="chat-slide">
       <div v-if="isOpen" class="chat-window">
         <div class="chat-header">
-          <div class="header-content">
-            <h3>职场健康顾问 (Alpha)</h3>
-            <p>基于《白领延寿指南》医学实证</p>
+          <div class="header-main">
+            <div class="ai-avatar">✨</div>
+            <div class="header-info">
+              <h3>白领健康顾问</h3>
+              <p>实时为您解答延寿方案</p>
+            </div>
           </div>
           <div class="header-status">在线</div>
         </div>
         
         <div class="chat-messages" ref="messageContainer">
-          <div v-for="(msg, i) in messages" :key="i" :class="['message', msg.role]">
-            <div class="content" v-html="formatText(msg.text)"></div>
+          <div v-for="(msg, i) in messages" :key="i" :class="['message-row', msg.role]">
+            <div class="avatar">{{ msg.role === 'assistant' ? '✨' : '👤' }}</div>
+            <div class="message-bubble" v-html="formatText(msg.text)"></div>
           </div>
-          <div v-if="isLoading" class="message assistant loading">
-            <span class="dots">正在查阅医学证据</span>
+          <div v-if="isLoading" class="message-row assistant">
+            <div class="avatar">✨</div>
+            <div class="message-bubble loading">
+              <div class="typing-indicator">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="chat-input-area">
-          <div class="input-container">
+          <div class="input-wrapper">
             <input 
               v-model="userInput" 
               @keyup.enter="sendMessage"
-              placeholder="问问关于健康的问题..." 
+              placeholder="输入问题或点击说话..." 
               :disabled="isLoading"
             />
-            <button @click="startVoice" class="voice-btn" :class="{ 'is-listening': isListening }" title="点击说话">
-              {{ isListening ? '📡' : '🎙️' }}
+            <!-- Gemini 风格彩色麦克风 -->
+            <button @click="startVoice" class="gemini-mic" :class="{ 'is-listening': isListening }">
+              <svg viewBox="0 0 24 24" class="mic-svg">
+                <path fill="#4285F4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path fill="#34A853" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+              <div v-if="isListening" class="mic-pulse"></div>
             </button>
           </div>
           <button @click="sendMessage" :disabled="isLoading || !userInput.trim()" class="send-btn">
@@ -58,12 +76,13 @@ const isLoading = ref(false)
 const isListening = ref(false)
 const messageContainer = ref(null)
 const messages = ref([
-  { role: 'assistant', text: '您好！我是您的数字化健康顾问。您可以问我关于职场饮食、补救运动或睡眠策略的问题，我会基于医学实证为您解答。' }
+  { role: 'assistant', text: '您好！我是您的智能健康顾问。有什么我可以帮您的吗？' }
 ])
 
 const GEMINI_KEY = "AIzaSyBqO2BBVA25h_1LYJmNLNpkSEZMKFJDbJo"
 
 const formatText = (text) => {
+  if (!text) return ''
   return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
 }
 
@@ -78,7 +97,8 @@ const sendMessage = async () => {
   await scrollBottom()
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`, {
+    // 使用 v1beta 版本的正式 API 路径
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -86,22 +106,28 @@ const sendMessage = async () => {
           parts: [{ text: `
             身份：你是“白领延寿指南”官方 AI 助手。
             任务：基于医学证据回答健康问题。
-            原则：
-            1. 优先引用 ACM（全因死亡率）数据。
-            2. 语气专业、温和、克制。
-            3. 如果问题不在指南范围内，请告知你专注于基于证据的长寿建议，并建议咨询医生。
-            4. 重点关注：挥拍运动(-47% ACM)、咖啡(-15% ACM)、7小时睡眠、戒烟戒酒、白肉、坚果。
+            背景知识：
+            - 挥拍运动降低 47% ACM。
+            - 每天 7 小时睡眠最佳，22-24点入睡。
+            - 喝咖啡降低 15-22% ACM。
+            - 喝牛奶降低 17% ACM，喝茶降低 15% ACM。
+            - 戒烟戒酒，少喝甜味饮料。
+            - 多吃辣、多吃坚果、吃白肉。
+            语气：专业、简洁、直接。
             用户问题：${text}
           ` }]
         }]
       })
     })
     
+    if (!response.ok) throw new Error('API Error')
+    
     const data = await response.json()
     const aiText = data.candidates[0].content.parts[0].text
     messages.value.push({ role: 'assistant', text: aiText })
   } catch (e) {
-    messages.value.push({ role: 'assistant', text: '抱歉，连接医学数据库超时，请稍后再试。' })
+    console.error(e)
+    messages.value.push({ role: 'assistant', text: '抱歉，连接医学数据库超时。这通常是因为新申请的接口正在激活中，请一分钟后刷新重试。' })
   } finally {
     isLoading.value = false
     await scrollBottom()
@@ -128,6 +154,7 @@ const startVoice = () => {
   recognition.onresult = (event) => {
     userInput.value = event.results[0][0].transcript
   }
+  recognition.onerror = () => { isListening.value = false }
   recognition.start()
 }
 </script>
@@ -135,54 +162,68 @@ const startVoice = () => {
 <style scoped>
 .chat-wrapper {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 2000;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  bottom: 25px;
+  right: 25px;
+  z-index: 9999;
+  font-family: -apple-system, system-ui, sans-serif;
 }
 
 .chat-trigger {
-  background: linear-gradient(135deg, #3498db, #2ecc71);
-  color: white;
-  border: none;
-  padding: 14px 28px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  padding: 10px 20px;
   border-radius: 50px;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
-  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .chat-trigger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
 }
 
-.trigger-text { display: flex; align-items: center; gap: 8px; }
-
-.pulse-icon {
-  animation: pulse 2s infinite;
-  display: inline-block;
+.trigger-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+.pulse-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: rgba(52, 152, 219, 0.2);
+  border-radius: 50%;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 .chat-window {
   position: absolute;
-  bottom: 80px;
+  bottom: 75px;
   right: 0;
   width: 380px;
-  height: 550px;
-  max-height: calc(100vh - 120px);
+  height: 580px;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -190,7 +231,7 @@ const startVoice = () => {
 }
 
 .chat-header {
-  background: #3498db;
+  background: linear-gradient(135deg, #4285f4, #34a853);
   color: white;
   padding: 20px;
   display: flex;
@@ -198,15 +239,12 @@ const startVoice = () => {
   align-items: center;
 }
 
-.header-content h3 { margin: 0; font-size: 17px; font-weight: 700; }
-.header-content p { margin: 4px 0 0; font-size: 12px; opacity: 0.9; }
+.header-main { display: flex; align-items: center; gap: 12px; }
+.ai-avatar { font-size: 24px; background: rgba(255,255,255,0.2); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+.header-info h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.header-info p { margin: 2px 0 0; font-size: 11px; opacity: 0.9; }
 
-.header-status {
-  font-size: 11px;
-  background: rgba(255,255,255,0.2);
-  padding: 4px 10px;
-  border-radius: 10px;
-}
+.header-status { font-size: 10px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 8px; }
 
 .chat-messages {
   flex: 1;
@@ -214,103 +252,108 @@ const startVoice = () => {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: #fdfdfd;
+  gap: 16px;
+  background: #f8f9fa;
 }
 
-.message {
-  max-width: 85%;
+.message-row { display: flex; gap: 10px; max-width: 90%; }
+.message-row.user { align-self: flex-end; flex-direction: row-reverse; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.user .avatar { background: #4285f4; color: white; }
+
+.message-bubble {
   padding: 12px 16px;
   border-radius: 18px;
   font-size: 14.5px;
   line-height: 1.5;
-}
-
-.user {
-  align-self: flex-end;
-  background: #3498db;
-  color: white;
-  border-bottom-right-radius: 4px;
-}
-
-.assistant {
-  align-self: flex-start;
-  background: #f1f1f1;
+  background: white;
   color: #2c3e50;
-  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.loading .dots::after {
-  content: '...';
-  animation: loading-dots 1.5s infinite;
+.user .message-bubble {
+  background: #4285f4;
+  color: white;
+  border-top-right-radius: 4px;
 }
 
-@keyframes loading-dots {
-  0% { content: '.'; }
-  33% { content: '..'; }
-  66% { content: '...'; }
+.assistant .message-bubble {
+  border-top-left-radius: 4px;
 }
+
+.typing-indicator { display: flex; gap: 4px; }
+.typing-indicator span { width: 6px; height: 6px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
 
 .chat-input-area {
-  padding: 15px;
+  padding: 15px 20px 20px;
   background: white;
-  border-top: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.input-container {
+.input-wrapper {
   display: flex;
-  background: #f5f7f9;
-  border-radius: 15px;
+  background: #f1f3f4;
+  border-radius: 28px;
   padding: 5px 15px;
   align-items: center;
 }
 
-.input-container input {
+.input-wrapper input {
   flex: 1;
   border: none;
   background: none;
-  padding: 10px 0;
+  padding: 12px 10px;
   outline: none;
-  font-size: 14px;
+  font-size: 14.5px;
 }
 
-.voice-btn {
+.gemini-mic {
   background: none;
   border: none;
-  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s;
+  position: relative;
 }
 
-.voice-btn.is-listening {
-  animation: shake 0.5s infinite;
+.mic-svg { width: 20px; height: 20px; }
+
+.mic-pulse {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #4285f4;
+  border-radius: 50%;
+  animation: mic-pulse 1.5s infinite;
 }
 
-@keyframes shake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(5deg); }
-  75% { transform: rotate(-5deg); }
+@keyframes mic-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
 }
 
 .send-btn {
-  background: #3498db;
+  background: #4285f4;
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.send-btn:disabled {
-  background: #bdc3c7;
-  cursor: not-allowed;
-}
+.send-btn:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(20px); }
+.chat-slide-enter-active, .chat-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.chat-slide-enter-from, .chat-slide-leave-to { opacity: 0; transform: translateY(40px) scale(0.9); }
 </style>
