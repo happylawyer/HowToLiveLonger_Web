@@ -3,37 +3,33 @@ layout: home
 
 hero:
   name: "程序员延寿指南"
-  text: "科学、严谨、公益"
-  tagline: "基于医学证据，增加 ~20 年预期寿命，降低 66.67% 全因死亡率。"
-  image:
-    src: https://raw.githubusercontent.com/geekan/HowToLiveLonger/main/docs/assets/logo.png
-    alt: Logo
+  text: "活得更久，活得更好"
+  tagline: "您的个人数字化健康顾问。基于全球顶尖医学实证，为您量身定制延寿方案。"
   actions:
     - theme: brand
-      text: 开始阅读
+      text: 立即开始延寿
       link: /guide
     - theme: alt
-      text: 查看源码
-      link: https://github.com/geekan/HowToLiveLonger
+      text: 咨询 AI 医生
+      link: /consult
 
 features:
-  - title: 🥗 科学输入
-    details: 吃白肉、蔬果为主，多吃辣，多吃坚果；喝咖啡、牛奶、茶。
+  - title: 🥗 饮食革命
+    details: 拒绝盲目养生。我们只告诉你那些能通过降低全因死亡率（ACM）验证的饮食方案。
     icon: 🥗
-  - title: 🎾 高效输出
-    details: 每周 3 次挥拍运动，每天睡够 7 小时。
-    icon: 🏃‍♂️
-  - title: 🤖 AI 顾问 (Beta)
-    details: 集成 Gemini 1.5 Flash，为您提供个性化的健康建议。
-    icon: 🧠
+  - title: 🏃‍♂️ 运动科学
+    details: 并不是运动量越大越好。寻找性价比最高、对心脏最友好的运动模式。
+    icon: 🎾
+  - title: 😴 睡眠艺术
+    details: 破解“早睡早起”的迷思，找到最适合程序员生物钟的 7 小时黄金睡眠。
+    icon: 🌙
 ---
 
-<div style="text-align: center; margin-top: 50px;">
+<div style="text-align: center; margin-top: 50px; padding: 0 20px;">
 
-## 为什么发起这个公益项目？
+## 为什么要看这份指南？
 
-互联网时代，程序员的健康面临巨大挑战。我们整理了全球顶尖医学期刊的证据，为您总结出这套行之有效的“生存手册”。
-
-[了解更多关于本项目的内容](/about)
+这不是一份普通的养生帖，这是一份**生命说明书**。
+我们分析了数千份医学论文，剔除了伪科学，只保留了那些真正能帮你**对抗衰老、预防疾病**的核心证据。
 
 </div>
