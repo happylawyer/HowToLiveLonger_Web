@@ -3,10 +3,11 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "程序员延寿指南 (公益版)",
   description: "基于医学证据的程序员长寿指南",
+  base: '/HowToLiveLonger_Web/',
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: '关于', link: '/about' }
+      { text: '关于项目', link: '/about' }
     ],
     sidebar: [
       {
