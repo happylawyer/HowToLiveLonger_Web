@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: "延寿指南 (公益版)",
+  title: "白领延寿指南 (公益版)",
   description: "您的数字化健康生存手册",
   base: '/HowToLiveLonger_Web/',
   head: [
@@ -32,7 +32,6 @@ export default defineConfig({
       options: {
         miniSearch: {
           options: {
-            /* 解决中文检索问题 */
             tokenize: (str) => str.split(/[\u4e00-\u9fa5]|\s+/)
           }
         },
