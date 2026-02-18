@@ -76,9 +76,10 @@ const isLoading = ref(false)
 const isListening = ref(false)
 const messageContainer = ref(null)
 const messages = ref([
-  { role: 'assistant', text: '您好！我是您的智能健康顾问。有什么我可以帮您的吗？' }
+  { role: 'assistant', text: '您好！我是您的智能健康顾问。您可以尝试问我：“久坐后如何补救？”或者“白领吃什么补剂最好？”' }
 ])
 
+// 你的 API Key
 const GEMINI_KEY = "AIzaSyBqO2BBVA25h_1LYJmNLNpkSEZMKFJDbJo"
 
 const formatText = (text) => {
@@ -96,38 +97,52 @@ const sendMessage = async () => {
   
   await scrollBottom()
 
-  try {
-    // 使用 v1beta 版本的正式 API 路径
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+  // 尝试不同的 API 版本和模型，增加容错性
+  const tryFetch = async (url) => {
+    return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
           parts: [{ text: `
-            身份：你是“白领延寿指南”官方 AI 助手。
-            任务：基于医学证据回答健康问题。
-            背景知识：
-            - 挥拍运动降低 47% ACM。
-            - 每天 7 小时睡眠最佳，22-24点入睡。
-            - 喝咖啡降低 15-22% ACM。
-            - 喝牛奶降低 17% ACM，喝茶降低 15% ACM。
-            - 戒烟戒酒，少喝甜味饮料。
-            - 多吃辣、多吃坚果、吃白肉。
-            语气：专业、简洁、直接。
-            用户问题：${text}
+            你是一个职场健康顾问。基于医学证据回答。
+            要求：专业、简洁、引用具体百分比。
+            知识库：挥拍运动(-47%ACM)、咖啡(-15%ACM)、7小时睡眠、戒酒、白肉、辣椒。
+            问题：${text}
           ` }]
         }]
       })
     })
+  }
+
+  try {
+    // 优先尝试 v1 版本的 1.5-flash
+    let response = await tryFetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`)
     
-    if (!response.ok) throw new Error('API Error')
+    // 如果 v1 不行，尝试 v1beta
+    if (!response.ok) {
+      response = await tryFetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`)
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error?.message || 'Unknown API Error')
+    }
     
     const data = await response.json()
     const aiText = data.candidates[0].content.parts[0].text
     messages.value.push({ role: 'assistant', text: aiText })
   } catch (e) {
-    console.error(e)
-    messages.value.push({ role: 'assistant', text: '抱歉，连接医学数据库超时。这通常是因为新申请的接口正在激活中，请一分钟后刷新重试。' })
+    console.error('Chat Error:', e)
+    let errorMsg = '抱歉，暂时无法连接医学数据库。'
+    if (e.message.includes('quota')) {
+      errorMsg = '抱歉，当前的免费咨询额度已用完，请明天再试。'
+    } else if (e.message.includes('key')) {
+      errorMsg = 'API Key 校验失败，请检查 Key 是否有效。'
+    } else {
+      errorMsg += ` (错误详情: ${e.message})`
+    }
+    messages.value.push({ role: 'assistant', text: errorMsg })
   } finally {
     isLoading.value = false
     await scrollBottom()
@@ -160,6 +175,7 @@ const startVoice = () => {
 </script>
 
 <style scoped>
+/* 此处保留之前的样式代码 */
 .chat-wrapper {
   position: fixed;
   bottom: 25px;
