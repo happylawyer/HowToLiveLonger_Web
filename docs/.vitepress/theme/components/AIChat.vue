@@ -49,7 +49,6 @@
               placeholder="输入问题或点击说话..." 
               :disabled="isLoading"
             />
-            <!-- Gemini 风格彩色麦克风 -->
             <button @click="startVoice" class="gemini-mic" :class="{ 'is-listening': isListening }">
               <svg viewBox="0 0 24 24" class="mic-svg">
                 <path fill="#4285F4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -97,17 +96,23 @@ const sendMessage = async () => {
   
   await scrollBottom()
 
-  // 尝试不同的 API 版本和模型，增加容错性
-  const tryFetch = async (url) => {
-    return fetch(url, {
+  const fetchAI = async (modelName) => {
+    return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
           parts: [{ text: `
-            你是一个职场健康顾问。基于医学证据回答。
-            要求：专业、简洁、引用具体百分比。
-            知识库：挥拍运动(-47%ACM)、咖啡(-15%ACM)、7小时睡眠、戒酒、白肉、辣椒。
+            身份：你是“白领延寿指南”官方 AI 助手。
+            任务：基于医学证据回答健康问题。
+            原则：专业、简洁、引用具体百分比数据。
+            背景知识：
+            - 挥拍运动降低 47% ACM。
+            - 每天 7 小时睡眠最佳，22-24点入睡。
+            - 喝咖啡降低 15-22% ACM。
+            - 喝牛奶降低 17% ACM，喝茶降低 15% ACM。
+            - 戒酒、戒烟、少喝甜味饮料。
+            - 多吃辣、多吃坚果、吃白肉。
             问题：${text}
           ` }]
         }]
@@ -116,17 +121,17 @@ const sendMessage = async () => {
   }
 
   try {
-    // 优先尝试 v1 版本的 1.5-flash
-    let response = await tryFetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`)
+    // 尝试不同的模型，提高兼容性
+    let response = await fetchAI('gemini-1.5-flash')
     
-    // 如果 v1 不行，尝试 v1beta
     if (!response.ok) {
-      response = await tryFetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`)
+        // 如果 flash 失败，尝试更轻量的 flash-8b 或 2.0-flash-lite
+        response = await fetchAI('gemini-2.0-flash-lite')
     }
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.error?.message || 'Unknown API Error')
+      throw new Error(errorData.error?.message || 'API 请求失败')
     }
     
     const data = await response.json()
@@ -134,15 +139,7 @@ const sendMessage = async () => {
     messages.value.push({ role: 'assistant', text: aiText })
   } catch (e) {
     console.error('Chat Error:', e)
-    let errorMsg = '抱歉，暂时无法连接医学数据库。'
-    if (e.message.includes('quota')) {
-      errorMsg = '抱歉，当前的免费咨询额度已用完，请明天再试。'
-    } else if (e.message.includes('key')) {
-      errorMsg = 'API Key 校验失败，请检查 Key 是否有效。'
-    } else {
-      errorMsg += ` (错误详情: ${e.message})`
-    }
-    messages.value.push({ role: 'assistant', text: errorMsg })
+    messages.value.push({ role: 'assistant', text: `抱歉，暂时无法连接医学数据库。具体原因：${e.message}。建议检查网络或 Key 状态。` })
   } finally {
     isLoading.value = false
     await scrollBottom()
@@ -175,7 +172,6 @@ const startVoice = () => {
 </script>
 
 <style scoped>
-/* 此处保留之前的样式代码 */
 .chat-wrapper {
   position: fixed;
   bottom: 25px;
