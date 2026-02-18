@@ -3,37 +3,69 @@ layout: home
 
 hero:
   name: "白领延寿指南"
-  text: "科学对抗职场损耗"
-  tagline: "拒绝焦虑，拒绝亚健康。一份专为现代办公族打造的、基于医学证据的数字化长寿手册。"
+  text: "把失去的 20 年夺回来"
+  tagline: "拒绝焦虑与职业损耗。这是一份基于数千份医学研究、专为职场精英打造的数字化生存手册。"
   image:
     src: https://cdn-icons-png.flaticon.com/512/2966/2966486.png
     alt: Health
   actions:
     - theme: brand
-      text: 开启科学健康生活
+      text: 📖 查阅手册内容
       link: /guide
     - theme: alt
-      text: 呼叫 AI 医生
+      text: 💬 咨询 AI 助手
       link: /consult
 
 features:
-  - title: 🥗 职场膳食
-    details: 针对外卖族、咖啡重度依赖者的优化建议，降低 20% 全因死亡率。
+  - title: 🥗 饮食的逻辑
+    details: 外卖也能吃出健康。我们通过量化数据告诉您，哪些食物能真正降低 23%-34% 的心血管风险。
     icon: 🍱
-  - title: 🎾 高效补救
-    details: 针对久坐族设计的“性价比运动”方案，利用碎片时间完成身体修复。
+  - title: 🎾 运动的效率
+    details: 抛弃盲目撸铁。羽毛球、乒乓球等挥拍运动能降低 47% 全因死亡率，是职场人的性价比之选。
     icon: ⚡
-  - title: 🤖 实时咨询
-    details: 右下角 AI 助手随时在线，支持文字与语音，为您即时解答健康疑问。
-    icon: 💬
+  - title: 😴 睡眠的质量
+    details: 破解“早起”焦虑。找到适合您的 7 小时黄金睡眠窗口，降低 40% 以上的过早死亡风险。
+    icon: 🌙
+  - title: 🤖 智能的陪伴
+    details: 右下角 AI 助手随时待命。支持文字与语音交互，深度学习数千份医学实证。
+    icon: 🧠
 ---
 
-<div style="text-align: center; margin-top: 80px; padding: 40px; background: var(--vp-c-bg-soft); border-radius: 20px;">
+<div class="custom-container">
 
-## 为什么白领更需要这份指南？
+## 为什么白领需要这份指南？
 
-长时间久坐、缺乏光照、外卖高盐高糖、睡眠不规律……
-我们的身体正在被职场环境悄悄“侵蚀”。
-本指南通过**量化数据**告诉您，如何通过微小的生活改变，找回那失去的 **20 年** 预期寿命。
+在快节奏的职场中，我们的身体正在经历前所未有的压力：
+**久坐、熬夜、高盐、缺乏光照**。
+
+这不是一份普通的养生帖。我们剔除了所有“我认为”、“听说”和“可能”，只保留了那些在《柳叶刀》、《JAMA》、《自然》等顶级期刊上经过**大规模人群实验验证**的结论。
+
+[查看我们的医学证据库](/guide#证据)
 
 </div>
+
+<style>
+.custom-container {
+  text-align: center;
+  margin-top: 60px;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, var(--vp-c-bg-soft) 0%, var(--vp-c-bg-alt) 100%);
+  border-radius: 24px;
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.custom-container h2 {
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--vp-c-text-1);
+}
+
+.custom-container p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--vp-c-text-2);
+  max-width: 800px;
+  margin: 0 auto;
+}
+</style>
